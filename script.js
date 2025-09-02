@@ -1,92 +1,94 @@
-const API_URL = "https://pdf-lock-backend.onrender.com"; // 🔥 तुम्‍हारा backend
+document.addEventListener("DOMContentLoaded", () => {
+  const startBtn = document.getElementById("startBtn");
+  const popupOverlay = document.getElementById("popupOverlay");
+  const popupTitle = document.getElementById("popupTitle");
+  const pdfFileInput = document.getElementById("pdfFile");
+  const passwordInput = document.getElementById("passwordInput");
+  const nextBtn = document.getElementById("nextBtn");
+  const loader = document.getElementById("loader");
+  const downloadSection = document.getElementById("downloadSection");
+  const downloadBtn = document.getElementById("downloadBtn");
 
-const startBtn = document.getElementById("startBtn");
-const popupOverlay = document.getElementById("popupOverlay");
-const nextBtn = document.getElementById("nextBtn");
-const passwordInput = document.getElementById("passwordInput");
-const confirmPasswordInput = document.getElementById("confirmPasswordInput");
-const loader = document.getElementById("loader");
-const downloadSection = document.getElementById("downloadSection");
-const downloadBtn = document.getElementById("downloadBtn");
-const pdfFileInput = document.getElementById("pdfFile");
-const popupTitle = document.getElementById("popupTitle");
+  let step = 1;
+  let selectedFile = null;
+  let password = "";
 
-let step = 0;
-let selectedFile = null;
-let finalPassword = "";
-
-// Step 1: open popup
-startBtn.addEventListener("click", () => {
-  popupOverlay.style.display = "flex";
-  step = 1;
-  popupTitle.innerText = "Upload your PDF";
-  pdfFileInput.style.display = "block";
-  passwordInput.style.display = "none";
-  confirmPasswordInput.style.display = "none";
-  downloadSection.style.display = "none";
-});
-
-// Step 2: next button logic
-nextBtn.addEventListener("click", async () => {
-  if (step === 1) {
-    if (!pdfFileInput.files.length) {
-      alert("Please upload a PDF file");
-      return;
-    }
-    selectedFile = pdfFileInput.files[0];
-    step = 2;
-    popupTitle.innerText = "Enter Password";
-    pdfFileInput.style.display = "none";
-    passwordInput.style.display = "block";
-  } 
-  else if (step === 2) {
-    if (!passwordInput.value) {
-      alert("Please enter password");
-      return;
-    }
-    finalPassword = passwordInput.value;
-    step = 3;
-    popupTitle.innerText = "Confirm Password";
+  startBtn.addEventListener("click", () => {
+    step = 1;
+    selectedFile = null;
+    password = "";
+    popupTitle.textContent = "Upload your PDF";
+    pdfFileInput.style.display = "block";
     passwordInput.style.display = "none";
-    confirmPasswordInput.style.display = "block";
-  } 
-  else if (step === 3) {
-    if (confirmPasswordInput.value !== finalPassword) {
-      alert("Password mismatch! Try again.");
-      confirmPasswordInput.value = "";
-      return;
+    downloadSection.style.display = "none";
+    popupOverlay.style.display = "flex";
+  });
+
+  nextBtn.addEventListener("click", async () => {
+    if (step === 1) {
+      if (pdfFileInput.files.length === 0) {
+        alert("Please upload a PDF file!");
+        return;
+      }
+      selectedFile = pdfFileInput.files[0];
+      step = 2;
+      popupTitle.textContent = "Enter password to lock PDF";
+      pdfFileInput.style.display = "none";
+      passwordInput.style.display = "block";
+      passwordInput.value = "";
+    } else if (step === 2) {
+      if (!passwordInput.value) {
+        alert("Please enter a password!");
+        return;
+      }
+      password = passwordInput.value;
+      step = 3;
+      popupTitle.textContent = "Confirm your password";
+      passwordInput.value = "";
+    } else if (step === 3) {
+      if (passwordInput.value !== password) {
+        alert("❌ Password mismatch! Try again.");
+        step = 2;
+        popupTitle.textContent = "Enter password to lock PDF";
+        passwordInput.value = "";
+        return;
+      }
+
+      // Show loader
+      loader.style.display = "block";
+      nextBtn.style.display = "none";
+
+      const formData = new FormData();
+      formData.append("pdf", selectedFile);
+      formData.append("password", password);
+
+      try {
+        const response = await fetch("https://pdf-lock-backend.onrender.com/lock-pdf", {
+          method: "POST",
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error("Server error: " + response.status);
+        }
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+
+        downloadBtn.onclick = () => {
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "locked.pdf";
+          a.click();
+        };
+
+        loader.style.display = "none";
+        downloadSection.style.display = "block";
+      } catch (error) {
+        loader.style.display = "none";
+        nextBtn.style.display = "block";
+        alert("⚠️ Error locking PDF: " + error.message);
+      }
     }
-    // lock PDF
-    loader.style.display = "block";
-    nextBtn.style.display = "none";
-
-    const formData = new FormData();
-    formData.append("pdf", selectedFile);
-    formData.append("password", finalPassword);
-
-    try {
-      const response = await fetch(`${API_URL}/lock`, {
-        method: "POST",
-        body: formData,
-      });
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      downloadBtn.onclick = () => {
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "locked.pdf";
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-      };
-
-      loader.style.display = "none";
-      downloadSection.style.display = "block";
-    } catch (err) {
-      alert("Error locking PDF: " + err.message);
-      loader.style.display = "none";
-      nextBtn.style.display = "block";
-    }
-  }
+  });
 });
