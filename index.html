@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hacking Green PDF Locker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <h1>Hacking Green PDF Locker</h1>
+  <button class="btn" id="startBtn">Upload PDF</button>
+
+  <div class="popup-overlay" id="popupOverlay">
+    <div class="popup" id="popupContent">
+      <h2 id="popupTitle">Upload your PDF</h2>
+      <input type="file" id="pdfFile" accept="application/pdf">
+
+      <!-- first password -->
+      <input type="password" id="passwordInput" placeholder="Enter Password" style="display:none;">
+      <!-- confirm password -->
+      <input type="password" id="confirmPasswordInput" placeholder="Confirm Password" style="display:none;">
+
+      <button id="nextBtn" class="btn">Next</button>
+      <div class="loader" id="loader" style="display:none;"></div>
+
+      <div id="downloadSection">
+        <p style="margin-bottom:10px;">PDF Locked Successfully!</p>
+        <button class="btn" id="downloadBtn">Download PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
